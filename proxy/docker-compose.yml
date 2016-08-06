@@ -1,0 +1,52 @@
+version: '2'
+services:
+  nginx-proxy:
+    image: solher/nginx-proxy:latest
+    container_name: nginx-proxy
+    restart: always
+    networks:
+      - internal
+      - back
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - letsencrypt:/etc/nginx/certs:ro
+    environment:
+      - AUTH_ENDPOINT=${AUTH_VIRTUAL_HOST}
+
+  auth-companion:
+    image: solher/auth-nginx-proxy-companion:latest
+    container_name: nginx-proxy-auth
+    restart: always
+    networks:
+      - internal
+      - back
+    volumes:
+      - auth:/var/lib/auth-nginx-proxy-companion:rw
+    environment:
+      - GRANT_ALL=true
+      - VIRTUAL_HOST=${AUTH_VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=${AUTH_VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+
+  letsencrypt-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion:latest
+    container_name: nginx-proxy-letsencrypt
+    restart: always
+    networks:
+      - internal
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/etc/nginx/certs:rw
+
+volumes:
+  auth:
+  letsencrypt:
+
+networks:
+  internal:
+  back:
