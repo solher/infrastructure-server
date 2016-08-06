@@ -18,7 +18,7 @@ How to install `Sup`:
 
 To create and deploy a new local development Docker machine, run:
 
-	$ sup dev deploy
+	$ sup local deploy
 	
 To deploy to the active Docker machine, run:
 

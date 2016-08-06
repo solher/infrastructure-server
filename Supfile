@@ -2,7 +2,7 @@
 version: 0.4
 
 networks:
-  dev:
+  local:
     env:
       SET_ENV: "docker-machine status infrastructure &> /dev/null || exit 0; eval $(docker-machine env infrastructure)"
     hosts:
@@ -20,7 +20,7 @@ commands:
     run: >
       eval $EXIT; \
         docker-machine create --driver virtualbox infrastructure; \
-        cat dev.env > .env
+        cat local.env > .env
 
   env-machine:
     desc: Displays the "infrastructure" environment variables and the host file.
