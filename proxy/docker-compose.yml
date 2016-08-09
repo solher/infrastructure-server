@@ -1,8 +1,8 @@
 version: '2'
-services:
-  nginx-proxy:
-    image: solher/nginx-proxy:latest
-    container_name: nginx-proxy
+services:  
+  nginx:
+    image: solher/nginx-proxy
+    container_name: nginx
     restart: always
     networks:
       - internal
@@ -11,14 +11,35 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /tmp/swarm/certs:/tmp/swarm/certs:ro
       - letsencrypt:/etc/nginx/certs:ro
     environment:
+      - DOCKER_TLS_VERIFY
+      - DOCKER_HOST
+      - DOCKER_CERT_PATH=/tmp/swarm/certs
       - AUTH_ENDPOINT=${AUTH_VIRTUAL_HOST}
+      - "constraint:type==nginx"
 
-  auth-companion:
-    image: solher/auth-nginx-proxy-companion:latest
-    container_name: nginx-proxy-auth
+  nginx-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-letsencrypt
+    restart: always
+    networks:
+      - internal
+    volumes_from:
+      - nginx
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/etc/nginx/certs:rw
+    depends_on:
+      - nginx
+    environment:
+      - "constraint:type==nginx"
+      - "affinity:container==nginx"
+
+  nginx-auth:
+    image: solher/auth-nginx-proxy-companion
+    container_name: nginx-auth
     restart: always
     networks:
       - internal
@@ -29,19 +50,8 @@ services:
       - GRANT_ALL=true
       - VIRTUAL_HOST=${AUTH_VIRTUAL_HOST}
       - LETSENCRYPT_HOST=${AUTH_VIRTUAL_HOST}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-
-  letsencrypt-companion:
-    image: jrcs/letsencrypt-nginx-proxy-companion:latest
-    container_name: nginx-proxy-letsencrypt
-    restart: always
-    networks:
-      - internal
-    volumes_from:
-      - nginx-proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt:/etc/nginx/certs:rw
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}  
+      - "constraint:type==infra"
 
 volumes:
   auth:

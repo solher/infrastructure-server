@@ -1,13 +1,15 @@
 version: '2'
 services:
   zipkin-cassandra:
-    image: openzipkin/zipkin-cassandra:1.6
+    image: openzipkin/zipkin-cassandra
     container_name: zipkin-cassandra
     networks:
       - internal
     restart: always
     volumes:
       - cassandra:/var/lib/cassandra
+    environment:
+      - "constraint:type==infra"
 
   zipkin-cron:
     image: openzipkin/zipkin-dependencies
@@ -16,32 +18,33 @@ services:
       - internal
     restart: always
     entrypoint: crond -f
+    depends_on:
+      - zipkin-cassandra
     environment:
       - STORAGE_TYPE=cassandra
       - CASSANDRA_CONTACT_POINTS=zipkin-cassandra
-    depends_on:
-      - zipkin-cassandra
+      - "constraint:type==infra"
+      - "affinity:container==zipkin-cassandra"
 
   zipkin:
-    image: openzipkin/zipkin:1.6
+    image: openzipkin/zipkin
     container_name: zipkin
     networks:
       - internal
       - proxy
     restart: always
+    depends_on:
+      - zipkin-cassandra
     environment:
       - STORAGE_TYPE=cassandra
       - CASSANDRA_CONTACT_POINTS=zipkin-cassandra
       - SELF_TRACING_ENABLED=false
-    ports:
-      - 9410:9410
-    depends_on:
-      - zipkin-cassandra
-    environment:
       - VIRTUAL_HOST=${ZIPKIN_VIRTUAL_HOST}
       - VIRTUAL_PORT=9411
       - LETSENCRYPT_HOST=${ZIPKIN_VIRTUAL_HOST}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - "constraint:type==infra"
+      - "affinity:container==zipkin-cassandra"
 
 volumes:
   cassandra:

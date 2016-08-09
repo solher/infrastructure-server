@@ -20,7 +20,3 @@ To create and deploy a new local development Docker machine, run:
 
 	$ sup local deploy
 	
-To deploy to the active Docker machine, run:
-
-	$ sup prod deploy
-	

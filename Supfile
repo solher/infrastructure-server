@@ -4,53 +4,26 @@ version: 0.4
 networks:
   local:
     env:
-      SET_ENV: "docker-machine status infrastructure &> /dev/null || exit 0; eval $(docker-machine env infrastructure)"
-    hosts:
-      - localhost
-
-  prod:
-    env:
-      EXIT: "exit 0"
+      CONNECT_SWARM: "docker-machine status swarm &> /dev/null || exit 0; eval $(docker-machine env --swarm swarm)"
     hosts:
       - localhost
 
 commands:
-  provision-machine:
-    desc: Create a local "infrastructure" Docker machine.
-    run: >
-      eval $EXIT; \
-        docker-machine create --driver virtualbox infrastructure; \
-        cat local.env > .env
-
-  env-machine:
-    desc: Displays the "infrastructure" environment variables and the host file.
-    run: >
-      eval $EXIT; eval $SET_ENV; \
-        echo && echo "DOCKER:"; \
-        docker-machine env infrastructure; \
-        echo && echo "HOST FILE:"; \
-        ip=$(docker-machine ip infrastructure); \
-        cat .env | grep VIRTUAL_HOST | cut -d'=' -f2 | while read line; do echo "$ip $line"; done
-
   deploy-proxy:
     desc: Deploy Nginx proxy.
     run: >
-      eval $SET_ENV; \
+      eval $CONNECT_SWARM; \
         docker-compose -f proxy/docker-compose.yml pull; \
-        docker-compose -f proxy/docker-compose.yml down; \
         docker-compose -f proxy/docker-compose.yml up -d --build
 
   deploy-zipkin:
     desc: Deploy Zipkin.
     run: >
-      eval $SET_ENV; \
+      eval $CONNECT_SWARM; \
         docker-compose -f zipkin/docker-compose.yml pull; \
-        docker-compose -f zipkin/docker-compose.yml down; \
         docker-compose -f zipkin/docker-compose.yml up -d --build
 
 targets:
   deploy:
-    - provision-machine
     - deploy-proxy
     - deploy-zipkin
-    - env-machine    
