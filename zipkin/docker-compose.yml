@@ -32,6 +32,7 @@ services:
     networks:
       - internal
       - proxy
+      - tracing
     restart: always
     depends_on:
       - zipkin-cassandra
@@ -51,6 +52,7 @@ volumes:
 
 networks:
   internal:
+  tracing:
   proxy:
     external:
       name: proxy_back

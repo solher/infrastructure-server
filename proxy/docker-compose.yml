@@ -51,7 +51,7 @@ services:
       - VIRTUAL_HOST=${AUTH_VIRTUAL_HOST}
       - LETSENCRYPT_HOST=${AUTH_VIRTUAL_HOST}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}  
-      - "constraint:type==infra"
+      - "constraint:type==nginx"
 
 volumes:
   auth:
